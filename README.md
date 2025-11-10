@@ -1,7 +1,7 @@
 # Performance Analysis of NN Training
 
-* Training workload to experiment with performance analysis tools like Nvidia Nsight.
-* Train Resnet18 and Resnet34 on CIFAR-10
+* Training workload to experiment with performance analysis tools.
+* Train Resnet18 and Resnet34 on CIFAR-10.
 
 ## 🚀 Setup
 

@@ -1,0 +1,8 @@
+# ignore everything in this folder…
+*
+# …except these tracked demo files
+!.gitignore
+!roofline_plot.py
+!sample_metrics.csv
+!sample_roofline.png
+!sample_summary.csv
