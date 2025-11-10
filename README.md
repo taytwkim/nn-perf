@@ -1,6 +1,7 @@
-# ResNet 18 
+# Performance Analysis of Neural Network Training
 
-Toy workload to experiment with neural networks.
+* Model training workload to experiment with performance analysis tools like Nvidia Nsight.
+* Train Resnet18 and Resnet34 on CIFAR-10
 
 ## 🚀 Setup
 
@@ -8,7 +9,7 @@ Toy workload to experiment with neural networks.
 ```bash!
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
+python3 -m pip install --upgrade pip
 ```
 
 2. Install dependencies.
@@ -27,12 +28,12 @@ pip install torch torchvision numpy pillow --index-url https://download.pytorch.
 
 * For CPU or MPS:
 ```bash!
-python3 train.py --epochs 5 --batch-size 128
+python3 train.py --model resnet18 --epochs 5 --batch-size 128
 ```
 
 * On NVIDIA GPUs, enable mixed precision (amp) for speed:
 ```
-python3 train.py --epochs 20 --batch-size 256 --amp --workers 4
+python3 train.py --model resnet18 --epochs 20 --batch-size 256 --amp --workers 4
 ```
 
 ## 🚂 Arguments
@@ -41,7 +42,7 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>]
                  [--data <PATH>] [--out-dir <DIR>]
                  [--workers <INT>] [--amp] [--label-smoothing <FLOAT>]
                  [--warmup <INT>] [--seed <INT>] [--resume <PATH>]
-                 [--save-every <INT>]
+                 [--save-every <INT>] [--model <STRING>]
 ```
 
   * `--epochs`: Number of full passes over the training set.
@@ -56,6 +57,7 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>]
   * `--seed`: Base RNG seed (offset by rank).
   * `--resume`: Resume from checkpoint produced by this script.
   * `--save-every`: Also save a snapshot every N epochs (0 disables).
+  * `--model`: specify model, either `resnet18` or `resnet34`.
 
 ## 📁 Directory
 ```
