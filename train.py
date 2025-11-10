@@ -152,7 +152,12 @@ def main(args):
     train_dl, test_dl = make_loaders(args.data, args.batch_size, args.workers, pin_mem)
 
     # Model
-    model = models.resnet18(num_classes=10)
+    if args.model.lower() == "resnet18":
+        model = models.resnet18(num_classes=10)
+    elif args.model.lower() == "resnet34":
+        model = models.resnet34(num_classes=10)
+    else:
+        raise ValueError(f"Unknown model '{args.model}'. Choose from ['resnet18', 'resnet34'].")
     model.to(device)
 
     # Optim, loss, sched
@@ -230,7 +235,7 @@ def main(args):
         # Save best
         if te_acc > best_acc:
             best_acc = te_acc
-            save_ckpt(os.path.join(args.out_dir, "resnet18_cifar10_best.pt"),
+            save_ckpt(os.path.join(args.out_dir, f"{args.model}_cifar10_best.pt"),
                       model, opt, sched, epoch, best_acc)
 
         # Optional epoch snapshots
@@ -239,7 +244,7 @@ def main(args):
                       model, opt, sched, epoch, best_acc)
 
     print(f"best test acc: {best_acc:.3f}")
-    torch.save(model.state_dict(), os.path.join(args.out_dir, "resnet18_final_weights.pt"))
+    torch.save(model.state_dict(), os.path.join(args.out_dir, f"{args.model}_final_weights.pt"))
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
@@ -255,5 +260,6 @@ if __name__ == "__main__":
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--resume", type=str, default="", help="path to checkpoint")
     p.add_argument("--save-every", type=int, default=0, help="save snapshot every N epochs (0=off)")
+    p.add_argument("--model", type=str, default="resnet18", choices=["resnet18", "resnet34"], help="model architecture")
     args = p.parse_args()
     main(args)
