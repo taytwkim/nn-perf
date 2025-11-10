@@ -1,4 +1,4 @@
-# Performance Analysis of Neural Network Training
+# Performance Analysis of NN Training
 
 * Training workload to experiment with performance analysis tools like Nvidia Nsight.
 * Train Resnet18 and Resnet34 on CIFAR-10
@@ -38,11 +38,12 @@ python3 train.py --model resnet18 --epochs 20 --batch-size 256 --amp --workers 4
 
 ## 🚂 Arguments
 ```bash!
-python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] 
-                 [--data <PATH>] [--out-dir <DIR>]
-                 [--workers <INT>] [--amp] [--label-smoothing <FLOAT>]
-                 [--warmup <INT>] [--seed <INT>] [--resume <PATH>]
-                 [--save-every <INT>] [--model <STRING>]
+python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
+                 [--data <PATH>] [--out-dir <DIR>] \
+                 [--workers <INT>] [--amp] [--label-smoothing <FLOAT>] \
+                 [--warmup <INT>] [--seed <INT>] [--resume <PATH>] \
+                 [--save-every <INT>] [--model <STRING>] \
+                 [--profile-one-step] [--warmup-iters <INT>] [--profile-iter <INT>]
 ```
 
   * `--epochs`: Number of full passes over the training set.
@@ -58,10 +59,15 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>]
   * `--resume`: Resume from checkpoint produced by this script.
   * `--save-every`: Also save a snapshot every N epochs (0 disables).
   * `--model`: specify model, either `resnet18` or `resnet34`.
+  
+  ### NVTX
+  * `--profile-one-step`: Warm up, then NVTX-mark exactly one training step and exit early.
+  * `--warmup-iters`: Iterations to run before profiling (default: 20).
+  * `--profile-iter`: Which iteration after warmup to profile (default: 1; i.e., the first post-warmup step).
 
 ## 📁 Directory
 ```
-resnet18-cifar10/
+nn-perf/
 ├─ train.py
 ├─ data/
 ├─ artifacts/

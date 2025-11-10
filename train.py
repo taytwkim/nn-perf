@@ -139,6 +139,19 @@ def load_ckpt(path, model, opt=None, sched=None, map_location="cpu"):
     
     return blob.get("epoch", 0), blob.get("best_acc", 0.0)
 
+# ---- NVTX helpers (no-ops when not on CUDA) ----
+def _nvtx_push(name: str, enabled: bool):
+    if enabled:
+        torch.cuda.nvtx.range_push(name)
+
+def _nvtx_pop(enabled: bool):
+    if enabled:
+        torch.cuda.nvtx.range_pop()
+
+def _cuda_sync(enabled: bool):
+    if enabled:
+        torch.cuda.synchronize()
+
 def main(args):
     set_seed(args.seed)
     
@@ -146,6 +159,7 @@ def main(args):
     use_cuda = (device.type == "cuda")    # are we on NVIDIA?
     amp_on = args.amp and use_cuda        # are we on AMP?
     pin_mem = use_cuda                    # pin_memory - only helps on CUDA
+    profiling_enabled = bool(args.profile_one_step) and use_cuda  # NVTX+sync only on CUDA
     
     log_device_info(device, amp_on)
 
@@ -185,32 +199,105 @@ def main(args):
         start_epoch, best_acc = load_ckpt(args.resume, model, opt, sched, map_location="cpu")
         print(f"[resume] from {args.resume} at epoch {start_epoch}, best_acc={best_acc:.3f}")
 
+    # Warmup/profiling controls
+    # Warmup lets cuDNN autotune, caches get populated, memory pools settle, JIT/fusions kick in—so the later profiled step reflects steady-state kernels/timings.
+    warmup_iters = max(0, args.warmup_iters)    # how many iterations to run before profiling starts.
+    profile_iter = max(1, args.profile_iter)    # which single iteration after warmup to profile (1 = the first one after warmup).
+    did_profile = False                         # a boolean flag indicating whether the script actually profiled that one step (used to exit early and skip eval).
+
     for epoch in range(start_epoch + 1, args.epochs + 1):
         t0 = time.time()
 
         # -------- train --------
         model.train()
         total, loss_sum, acc_sum = 0, 0.0, 0.0
+
+        it = 0
         for xb, yb in train_dl:
+            it += 1
             xb, yb = xb.to(device, non_blocking=True), yb.to(device, non_blocking=True)
             opt.zero_grad(set_to_none=True)
+
+            # Pick which iteration to profile: decide whether this iteration is the NVTX-profiled one
+            profile_this_step = profiling_enabled and (it == warmup_iters + profile_iter)
+
+            if profiling_enabled and it == 1:
+                print(f"[profile] warmup iters={warmup_iters}, profiling iter={warmup_iters + profile_iter} (1-based within epoch)")
+            
+            """
+            Use NVTX to profle one training step
+            - Profile GPU work inside the NVTX window (matmul/conv, fused ops, optimizer kernels)
+            - Attribution to sub-ranges (“forward”, “backward”, etc.)
+            - Bounded to one batch thanks to warmup + syncs + early exit
+
+            Using NVTX
+            nvtx push/pop labels “start/stop” markers on the host timeline.
+            nvtx.range_push("name") tells the profiler “start a region called name now.”
+            nvtx.range_pop() says “end the most recent region.”
+
+            They’re annotations that Nsight tools read later to:
+            Align your labeled regions with actual CUDA kernel launches (which are async).
+            Let you filter and attribute metrics to specific phases (forward/backward/opt).
+            """
+            
+            if profile_this_step:
+                _cuda_sync(True) # torch.cuda.synchronize() ensures your “end” truly captures all GPU work inside the range (CUDA is async by default).
+                _nvtx_push("train_step", True)
+
             with autocast_ctx():
+                if profile_this_step: _nvtx_push("forward", True)
                 logits = model(xb)
+                if profile_this_step: _nvtx_pop(True)
+
+                if profile_this_step: _nvtx_push("loss", True)
                 loss = loss_fn(logits, yb)
+                if profile_this_step: _nvtx_pop(True)
 
             if scaler is not None:
+                if profile_this_step: _nvtx_push("backward", True)
                 scaler.scale(loss).backward()
+                if profile_this_step: _nvtx_pop(True)
+
+                if profile_this_step: _nvtx_push("optimizer_step", True)
                 scaler.step(opt)
                 scaler.update()
+                if profile_this_step: _nvtx_pop(True)
             else:
+                if profile_this_step: _nvtx_push("backward", True)
                 loss.backward()
+                if profile_this_step: _nvtx_pop(True)
+
+                if profile_this_step: _nvtx_push("optimizer_step", True)
                 opt.step()
+                if profile_this_step: _nvtx_pop(True)
+
             sched.step()
 
+            if profile_this_step:
+                _nvtx_pop(True)   # pop "train_step"
+                _cuda_sync(True)
+                did_profile = True
+                print("[profile] captured one training step via NVTX; exiting early from training loop.")
+                # Update metrics for the profiled batch before exiting
+                bs = xb.size(0)
+                total += bs
+                loss_sum += loss.detach().item() * bs
+                acc_sum += accuracy(logits.detach(), yb) * bs
+                break  # early-exit the training loop
+
+            # Normal metrics accumulation
             bs = xb.size(0)
             total += bs
             loss_sum += loss.detach().item() * bs
             acc_sum += accuracy(logits.detach(), yb) * bs
+
+        # If we profiled a single step, skip eval and end after this epoch.
+        if did_profile:
+            tr_loss, tr_acc = loss_sum / max(1, total), acc_sum / max(1, total)
+            dt = time.time() - t0
+            print(f"epoch {epoch:3d} | train loss {tr_loss:.4f} acc {tr_acc:.3f} | (profile run) | {dt:.1f}s")
+            print("[profile] Done. Skipping eval and remaining epochs.")
+            return
 
         # -------- eval --------
         model.eval()
@@ -261,5 +348,8 @@ if __name__ == "__main__":
     p.add_argument("--resume", type=str, default="", help="path to checkpoint")
     p.add_argument("--save-every", type=int, default=0, help="save snapshot every N epochs (0=off)")
     p.add_argument("--model", type=str, default="resnet18", choices=["resnet18", "resnet34"], help="model architecture")
+    p.add_argument("--profile-one-step", action="store_true", help="warm up then profile exactly one training step via NVTX and exit early (CUDA only)")
+    p.add_argument("--warmup-iters", type=int, default=20, help="number of warmup iterations before the profiled step")
+    p.add_argument("--profile-iter", type=int, default=1, help="which iteration after warmup to profile (1 = first after warmup)")
     args = p.parse_args()
     main(args)
