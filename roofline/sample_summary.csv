@@ -1,2 +1,2 @@
-label,sm_pct_elapsed,dram_pct_elapsed,peak_compute_TFLOPS,peak_bw_GBps,AI_flop_per_byte,attained_GFLOP_per_s,knee_AI
-RN18 FP32 BS128 (one NVTX step),25.60080311294998,38.422188440635715,8.1,300.0,17.99016953752187,2073.6650521489482,27.0
+label,sm_pct_elapsed,dram_pct_elapsed,peak_compute_TFLOPS,peak_bw_GBps,AI_flop_per_byte,attained_GFLOP_per_s,knee_AI,step_time_seconds,flops_per_step_GF,bytes_per_step_GB
+RN18 FP32 BS128 (one NVTX step),25.60080311294998,38.422188440635715,8.1,300.0,17.99016953752187,2073.6650521489482,27.0,0.00746939,15.489013003870832,0.8609709303498
