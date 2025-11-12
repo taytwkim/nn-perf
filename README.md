@@ -48,17 +48,17 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
 ```
 
   * `--epochs`: Number of full passes over the training set.
-  * `--batch-size`: Per-GPU/per-process mini-batch size. Global = batch_size × world_size.
-  * `--lr`: Base learning rate per GPU.
-  * `--data`: CIFAR-10 data directory; rank 0 downloads here if missing.
-  * `--out-dir`: Output directory for checkpoints/final weights (rank 0 only).
-  * `--workers`: DataLoader workers per process. CPU: 0–2; GPU: 4–8 typical.
+  * `--batch-size`: Mini-batch size per training step.
+  * `--lr`: Initial learning rate.
+  * `--data`: CIFAR-10 data directory; downloads here if missing.
+  * `--out-dir`: Output directory for checkpoints/final weights.
+  * `--workers`: Number of DataLoader worker processes (typical: 0–2 on CPU, 4–8 on CUDA).
   * `--amp`: Enable mixed precision on CUDA (ignored on CPU/MPS).
   * `--label-smoothing`: Label smoothing for cross-entropy (e.g., 0.1).
   * `--warmup`: Optimizer steps (not epochs) of linear warmup before cosine decay.
-  * `--seed`: Base RNG seed (offset by rank).
+  * `--seed`: RNG seed.
   * `--resume`: Resume from checkpoint produced by this script.
-  * `--save-every`: Also save a snapshot every N epochs (0 disables).
+  * `--save-every`: Save a snapshot every N epochs (0 disables).
   * `--model`: specify model, either `resnet18` or `resnet34`.
   
   ### NVTX
