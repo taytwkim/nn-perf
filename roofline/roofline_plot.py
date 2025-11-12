@@ -95,7 +95,7 @@ def main():
     if not join_keys:
         raise SystemExit("Could not find kernel identity columns (Kernel Name/Context/Stream/Block/Grid/Device/CC).")
     
-    sm_pct   = weighted_avg(df, METRIC_SM, join_keys)
+    sm_pct = weighted_avg(df, METRIC_SM, join_keys)
     dram_pct = weighted_avg(df, METRIC_DRAM, join_keys)
     
     if not np.isfinite(sm_pct) or not np.isfinite(dram_pct):
@@ -106,14 +106,14 @@ def main():
 
     peak_compute_gflops = args.peak_compute * 1000.0
     achieved_compute_gflops = (sm_pct / 100.0) * peak_compute_gflops
-    achieved_bw_gbps        = (dram_pct / 100.0) * args.peak_bw
+    achieved_bw_gbps = (dram_pct / 100.0) * args.peak_bw
     
     if achieved_bw_gbps <= 0:
         raise SystemExit("Derived bandwidth is non-positive; check --peak-bw and CSV contents.")
 
     # Roofline point
     AI = achieved_compute_gflops / achieved_bw_gbps      # FLOP/byte
-    Y  = achieved_compute_gflops                         # GFLOP/s
+    Y = achieved_compute_gflops                         # GFLOP/s
     knee_AI = peak_compute_gflops / args.peak_bw
 
     # Per-step totals using measured device time
@@ -138,24 +138,33 @@ def main():
     # Plot
     x_min = max(1e-3, min(AI/5, knee_AI/20))
     x_max = max(AI*5, knee_AI*2)
+
     xs = logspace(x_min, x_max, 300)
     ys = [min(peak_compute_gflops, x * args.peak_bw) for x in xs]
 
     fig, ax = plt.subplots(figsize=(7.5, 5), dpi=140)
-    ax.set_xscale("log"); ax.set_yscale("log")
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    
     ax.plot(xs, ys, linewidth=2, label="Theoretical roof")
+    
     ax.hlines(peak_compute_gflops, x_min, x_max, linestyles="--", linewidth=1, label="Compute peak")
     ax.vlines(knee_AI, max(ys[0]*0.5, 1.0), peak_compute_gflops, linestyles=":", linewidth=1, label="Knee")
 
     ax.scatter([AI], [Y], s=40)
     ax.annotate(f"{args.label}\nAI={AI:.3f}, Y={Y:.1f} GFLOP/s\nSM%={sm_pct:.1f}, DRAM%={dram_pct:.1f}", (AI, Y), textcoords="offset points", xytext=(8,6), fontsize=8)
+    
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(max(1.0, ys[0]*0.5), peak_compute_gflops*1.5)
+    
     ax.set_xlabel("Arithmetic Intensity (FLOP/byte)")
     ax.set_ylabel("Attainable Performance (GFLOP/s)")
+    
     ax.set_title(f"Roofline (Peak: {args.peak_compute:.2f} TFLOP/s, {args.peak_bw:.0f} GB/s)")
     ax.grid(True, which="both", ls=":", lw=0.5)
     ax.legend(loc="lower right", fontsize=8)
+    
     fig.tight_layout()
     fig.savefig(args.out)
 
