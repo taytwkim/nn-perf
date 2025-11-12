@@ -262,6 +262,7 @@ def main(args):
                 scaler.step(opt)
                 scaler.update()
                 if profile_this_step: _nvtx_pop(True)
+
             else:
                 if profile_this_step: _nvtx_push("backward", True)
                 loss.backward()
@@ -278,6 +279,7 @@ def main(args):
                 _nvtx_pop(True)
                 did_profile = True
                 print("[profile] captured one training step via NVTX; exiting early from training loop.")
+                
                 # Update metrics for the profiled batch before exiting
                 bs = xb.size(0)
                 total += bs
