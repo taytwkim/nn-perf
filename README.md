@@ -2,9 +2,7 @@
 
 * Training workload to experiment with performance analysis tools (Nsight Compute).
 * Train Resnet18 and Resnet34 on CIFAR-10.
-* Extract `.ncu-rep` file as a csv and generate a roofline model like below. If available, NCU UI can be used for roofline modeling instead.
-
-![roofline](roofline/sample_roofline.png)
+* Extract `.ncu-rep` file as a csv and generate a roofline model. If available, NCU UI can be used for roofline modeling instead.
 
 ## 🚂 Train
 
@@ -39,7 +37,7 @@ python3 train.py --model resnet18 --epochs 5 --batch-size 128
 python3 train.py --model resnet18 --epochs 20 --batch-size 256 --amp --workers 4
 ```
 
-## 🚀 Arguments
+## 🚀 Training Arguments
 ```bash!
 python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
                  [--data <PATH>] [--out-dir <DIR>] \
