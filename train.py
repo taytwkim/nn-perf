@@ -274,8 +274,8 @@ def main(args):
             sched.step()
 
             if profile_this_step:
-                _nvtx_pop(True)   # pop "train_step"
                 _cuda_sync(True)
+                _nvtx_pop(True)
                 did_profile = True
                 print("[profile] captured one training step via NVTX; exiting early from training loop.")
                 # Update metrics for the profiled batch before exiting
