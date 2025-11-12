@@ -1,9 +1,12 @@
 # Performance Analysis of NN Training
 
-* Training workload to experiment with performance analysis tools.
+* Training workload to experiment with performance analysis tools (Nsight Compute).
 * Train Resnet18 and Resnet34 on CIFAR-10.
+* Extract `.ncu-rep` file as a csv and generate a roofline model like below. If available, NCU UI can be used for roofline modeling instead.
 
-## 🚀 Setup
+![roofline](roofline/sample_roofline.png)
+
+## 🚂 Train
 
 1. Activate a venv.
 ```bash!
@@ -24,7 +27,7 @@ pip install -r requirements.txt
 pip install torch torchvision numpy pillow --index-url https://download.pytorch.org/whl/cu121
 ```
 
-3. Train model (single node).
+3. Train.
 
 * For CPU or MPS:
 ```bash!
@@ -36,7 +39,7 @@ python3 train.py --model resnet18 --epochs 5 --batch-size 128
 python3 train.py --model resnet18 --epochs 20 --batch-size 256 --amp --workers 4
 ```
 
-## 🚂 Arguments
+## 🚀 Arguments
 ```bash!
 python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
                  [--data <PATH>] [--out-dir <DIR>] \
@@ -61,9 +64,30 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
   * `--model`: specify model, either `resnet18` or `resnet34`.
   
   ### NVTX
+  NVTX is NVIDIA’s API for adding named ranges/markers to your code so Nsight tools can attribute and filter GPU work by those labeled regions. We can use NVTX to profile one training step (forward + backward + optimizer)
   * `--profile-one-step`: Warm up, then NVTX-mark exactly one training step and exit early.
   * `--warmup-iters`: Iterations to run before profiling (default: 20).
   * `--profile-iter`: Which iteration after warmup to profile (default: 1; i.e., the first post-warmup step).
+
+## 📈 Roofline
+`roofline_plot.py` can be used to generate a roofline model. To use `roofline_plot.py`, `.ncu-rep` must be exported as a csv file. See `sample_metrics.csv` to see which metrics should be collected.
+
+```bash!
+python3 roofline_plot.py <CSV> \
+        --peak-compute <TFLOP/s> \
+        --peak-bw <GB/s> \
+        [--label <STRING>] \
+        [--out <PNG>] \
+        [--summary <CSV>]
+```
+
+Example:
+```bash!
+python3 roofline_plot.py sample_metrics.csv \
+        --peak-compute 8.1 --peak-bw 300 \
+        --label "RN18 FP32 BS128 (one NVTX step)" \
+        --out sample_roofline.png --summary sample_summary.csv
+```
 
 ## 📁 Directory
 ```
@@ -71,7 +95,7 @@ nn-perf/
 ├─ train.py
 ├─ data/
 ├─ artifacts/
-└─ requirements.txt
+└─ roofline/
 ```
 
 * `data/` [Not tracked by git]
@@ -87,3 +111,6 @@ nn-perf/
     * `*_best.pt` (full checkpoint)
         * Use to resume training with identical optimizer dynamics.
         * Contains model weights, optimizer state (e.g., momentum), scheduler state (e.g., where you are on the LR curve), plus metadata like epoch and best accuracy.
+
+* `roofline/`
+    * `roofline_plot.py`: reads csv extracted from `.ncu-rep` and generates a roofline model. See `sample_metrics.csv`.
