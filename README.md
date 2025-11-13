@@ -5,10 +5,10 @@
 * Extract `.ncu-rep` file as a csv and generate a roofline model using `roofline-plot.py`. If available, NCU UI can be used for roofline modeling instead.
 
 ### Jump To:
-- [Model Training](#🚂-train)
-- [Training Arguments](#🚀-training-arguments)
-- [Roofline Modeling](#📈-roofline)
-- [Directory](#📁-directory)
+- [Model Training](#train)
+- [Training Arguments](#training-arguments)
+- [Roofline Modeling](#roofline)
+- [Directory](#directory)
 
 ## 🚂 Train
 
