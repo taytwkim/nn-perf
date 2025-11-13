@@ -1,8 +1,14 @@
 # Performance Analysis of NN Training
 
-* Training workload to experiment with performance analysis tools (Nsight Compute).
-* Train Resnet18 and Resnet34 on CIFAR-10.
-* Extract `.ncu-rep` file as a csv and generate a roofline model. If available, NCU UI can be used for roofline modeling instead.
+* Models to experiment with performance profilers (NVIDIA Nsight Compute).
+* Train ResNet18 and ResNet34 on CIFAR-10.
+* Extract `.ncu-rep` file as a csv and generate a roofline model using `roofline-plot.py`. If available, NCU UI can be used for roofline modeling instead.
+
+### Jump To:
+- [Model Training](#🚂-Train)
+- [Training Arguments](#🚀-Training-Arguments)
+- [Roofline Modeling](#📈-Roofline)
+- [Directory](#📁-Directory)
 
 ## 🚂 Train
 
