@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-METRIC_SM   = "sm__throughput.avg.pct_of_peak_sustained_elapsed"
+METRIC_SM = "sm__throughput.avg.pct_of_peak_sustained_elapsed"
 METRIC_DRAM = "dram__throughput.avg.pct_of_peak_sustained_elapsed"
 METRIC_TIME = "gpu__time_duration.sum"
 
@@ -113,7 +113,7 @@ def main():
 
     # Roofline point
     AI = achieved_compute_gflops / achieved_bw_gbps      # FLOP/byte
-    Y = achieved_compute_gflops                         # GFLOP/s
+    Y = achieved_compute_gflops                          # GFLOP/s
     knee_AI = peak_compute_gflops / args.peak_bw
 
     # Per-step totals using measured device time

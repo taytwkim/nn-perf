@@ -1,10 +1,16 @@
 # Performance Analysis of NN Training
 
-* Training workload to experiment with performance analysis tools (Nsight Compute).
-* Train Resnet18 and Resnet34 on CIFAR-10.
-* Extract `.ncu-rep` file as a csv and generate a roofline model. If available, NCU UI can be used for roofline modeling instead.
+* Models to experiment with performance profilers (NVIDIA Nsight Compute).
+* Train ResNet18 and ResNet34 on CIFAR-10.
+* Extract `.ncu-rep` file as a csv and generate a roofline model using `roofline-plot.py`. If available, NCU UI can be used for roofline modeling instead.
 
-## 🚂 Train
+### Jump To:
+- [Model Training](#train)
+- [Training Arguments](#training-arguments)
+- [Roofline Modeling](#roofline)
+- [Directory](#directory)
+
+## <a id="train"></a> 🚂 Train
 
 1. Activate a venv.
 ```bash!
@@ -37,7 +43,7 @@ python3 train.py --model resnet18 --epochs 5 --batch-size 128
 python3 train.py --model resnet18 --epochs 20 --batch-size 256 --amp --workers 4
 ```
 
-## 🚀 Training Arguments
+## <a id="training-arguments"></a> 🚀 Training Arguments
 ```bash!
 python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
                  [--data <PATH>] [--out-dir <DIR>] \
@@ -67,7 +73,7 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
   * `--warmup-iters`: Iterations to run before profiling (default: 20).
   * `--profile-iter`: Which iteration after warmup to profile (default: 1; i.e., the first post-warmup step).
 
-## 📈 Roofline
+## <a id="roofline"></a> 📈 Roofline
 `roofline_plot.py` can be used to generate a roofline model. To use `roofline_plot.py`, `.ncu-rep` must be exported as a csv file. See `sample_metrics.csv` to see which metrics should be collected.
 
 ```bash!
@@ -87,7 +93,7 @@ python3 roofline_plot.py sample_metrics.csv \
         --out sample_roofline.png --summary sample_summary.csv
 ```
 
-## 📁 Directory
+## <a id="directory"></a> 📁 Directory
 ```
 nn-perf/
 ├─ train.py
