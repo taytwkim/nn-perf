@@ -1,8 +1,10 @@
-# Performance Analysis of NN Training
+# Performance Analysis of Model Training
 
-* Models to experiment with performance profilers (NVIDIA Nsight Compute).
+* Experiment with performance profilers (NVIDIA Nsight Compute).
 * Train ResNet18 and ResNet34 on CIFAR-10.
-* Extract `.ncu-rep` file as a csv and generate a roofline model using `roofline-plot.py`. If available, NCU UI can be used for roofline modeling instead.
+* Extract `.ncu-rep` file as a csv and generate a roofline model using `plot-roofline.py`. If available, NCU UI can be used for roofline modeling instead.
+
+<img src="roofline/img/a1_resnet18_bs64_L4.png" width="500" />
 
 ### Jump To:
 - [Model Training](#train)
@@ -74,23 +76,41 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
   * `--profile-iter`: Which iteration after warmup to profile (default: 1; i.e., the first post-warmup step).
 
 ## <a id="roofline"></a> 📈 Roofline
-`roofline_plot.py` can be used to generate a roofline model. To use `roofline_plot.py`, `.ncu-rep` must be exported as a csv file. See `sample_metrics.csv` to see which metrics should be collected.
 
+1. First, generate a `.ncu-rep` file. The metrics listed below must be included.
 ```bash!
-python3 roofline_plot.py <CSV> \
-        --peak-compute <TFLOP/s> \
-        --peak-bw <GB/s> \
-        [--label <STRING>] \
-        [--out <PNG>] \
-        [--summary <CSV>]
+ncu \
+  --nvtx \
+  --nvtx-include "train_step/" \
+  --target-processes all \
+  --metrics sm__throughput.avg.pct_of_peak_sustained_elapsed,\
+dram__throughput.avg.pct_of_peak_sustained_elapsed,\
+gpu__time_duration.sum,\
+smsp__sass_thread_inst_executed_op_fadd_pred_on.sum,\
+smsp__sass_thread_inst_executed_op_fmul_pred_on.sum,\
+smsp__sass_thread_inst_executed_op_ffma_pred_on.sum,\
+dram__bytes_read.sum,\
+dram__bytes_write.sum \
+  --force-overwrite \
+  --export report-file-name \
+  python3 train.py --epochs 1 --batch-size 128 --profile-one-step --warmup-iters 20
 ```
 
-Example:
+2. Export `.ncu-rep` as a csv, and parse it to generate a profiler summary.
 ```bash!
-python3 roofline_plot.py sample_metrics.csv \
-        --peak-compute 8.1 --peak-bw 300 \
-        --label "RN18 FP32 BS128 (one NVTX step)" \
-        --out sample_roofline.png --summary sample_summary.csv
+ncu --import report.ncu-rep --csv > report.csv
+python3 parse_ncu_csv.py report.csv --label resnet18_bs128_L4 --out summary.txt
+```
+
+3. Based on the summary, generate a roofline model by passing in arguments. `ai` and `gflops` are extracted from `.ncu-rep`, and `peak-compute` and `peak-bw` are known for each GPU (e.g., 30 TFLOPS and 300 GB/s for L4).
+```bash!
+python3 plot_roofline.py \
+  --ai 15.624057 \
+  --gflops 1466.556 \
+  --peak-compute 30.0 \
+  --peak-bw 300.0 \
+  --label resnet18_bs128_L4 \
+  --out resnet18_bs128_L4.png
 ```
 
 ## <a id="directory"></a> 📁 Directory
@@ -117,4 +137,5 @@ nn-perf/
         * Contains model weights, optimizer state (e.g., momentum), scheduler state (e.g., where you are on the LR curve), plus metadata like epoch and best accuracy.
 
 * `roofline/`
-    * `roofline_plot.py`: reads csv extracted from `.ncu-rep` and generates a roofline model. See `sample_metrics.csv`.
+    * `parse_ncu_csv.py`: parse `.ncu-rep` and generates a summary text file.
+    * `plot_roofline.py`: generates a roofline model and save it as a png.
