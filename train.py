@@ -10,6 +10,9 @@ from torchvision import datasets, transforms, models
 CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 CIFAR10_STD  = (0.2023, 0.1994, 0.2010)
 
+torch.backends.cuda.matmul.allow_tf32 = False
+torch.backends.cudnn.allow_tf32 = False
+
 def set_seed(seed: int):
     random.seed(seed)                           # seeds Python's built-in RNG
     torch.manual_seed(seed)                     # seeds PyTorch CPU RNG
