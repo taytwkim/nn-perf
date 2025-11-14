@@ -2,7 +2,8 @@
 *
 # …except these tracked demo files
 !.gitignore
-!roofline_plot.py
+!plot_roofline.py
+!parse_csv.py
 !sample_metrics.csv
 !sample_roofline.png
 !sample_summary.csv
