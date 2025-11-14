@@ -1,9 +1,16 @@
-# ignore everything in this folder…
+# ignore everything
 *
-# …except these tracked demo files
+# …except these tracked files
 !.gitignore
 !plot_roofline.py
-!parse_csv.py
-!sample_metrics.csv
-!sample_roofline.png
-!sample_summary.csv
+!parse_ncu_csv.py
+
+# allow the directory itself
+!csv/
+!img/
+!summary/
+
+# but only un-ignore this specific file inside it
+!csv/a1-rep.csv
+!img/a1_resnet18_bs64_L4.png
+!summary/a1-summary.txt

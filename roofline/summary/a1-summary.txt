@@ -1,0 +1,22 @@
+Label: resnet18_bs64_L4
+Input CSV: csv/a1-rep.csv
+
+=== Totals (per profiled step) ===
+Total fadd instructions : 3.527e+07
+Total fmul instructions : 2.622e+07
+Total ffma instructions : 2.433e+09
+Total FLOPs             : 4.928e+09
+
+Total DRAM bytes read   : 6.367e+08
+Total DRAM bytes write  : 1.074e+08
+Total DRAM bytes total  : 7.441e+08
+
+=== Time and rates ===
+Step time (seconds)     : 7.376250e-03
+Achieved GFLOP/s        : 668.144
+Achieved GB/s           : 100.875
+Arithmetic intensity    : 6.623475 FLOP/byte
+
+=== Utilization (time-weighted, elapsed) ===
+SM% pct_of_peak_sustained_elapsed   : 13.647
+DRAM% pct_of_peak_sustained_elapsed : 23.164

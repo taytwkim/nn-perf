@@ -4,7 +4,10 @@ import math
 import numpy as np
 import pandas as pd
 
-# Metric names
+"""
+Parse the csv file extracted from the ncu report, generate a summary
+"""
+
 METRIC_SM   = "sm__throughput.avg.pct_of_peak_sustained_elapsed"
 METRIC_DRAM = "dram__throughput.avg.pct_of_peak_sustained_elapsed"
 METRIC_TIME = "gpu__time_duration.sum"
@@ -16,7 +19,6 @@ METRIC_FFMA = "smsp__sass_thread_inst_executed_op_ffma_pred_on.sum"
 METRIC_DRAM_READ  = "dram__bytes_read.sum"
 METRIC_DRAM_WRITE = "dram__bytes_write.sum"
 
-
 def to_float(v):
     """Convert Metric Value cell to float; strip % and thousands separators."""
     try:
@@ -25,23 +27,23 @@ def to_float(v):
     except Exception:
         return np.nan
 
-
 def detect_time_scale(unit_raw: str) -> float:
     """Map time unit to seconds scaling factor."""
     u = (unit_raw or "").strip().lower()
 
     if u in {"usecond", "us", "µs", "microsecond", "microseconds"}:
         return 1e-6
+    
     if u in {"ms", "millisecond", "milliseconds"}:
         return 1e-3
+    
     if u in {"ns", "nanosecond", "nanoseconds"}:
         return 1e-9
+    
     if u in {"s", "sec", "second", "seconds"}:
         return 1.0
 
-    # Fallback (Nsight often uses usecond)
     return 1e-6
-
 
 def detect_bytes_scale(unit_raw: str) -> float:
     """Map byte units (byte, Kbyte, Mbyte, etc.) to bytes."""
@@ -49,22 +51,23 @@ def detect_bytes_scale(unit_raw: str) -> float:
 
     if u in {"byte", "bytes"}:
         return 1.0
+    
     if u in {"kbyte", "kbytes", "kb"}:
         return 1024.0
+    
     if u in {"mbyte", "mbytes", "mb"}:
         return 1024.0 ** 2
+    
     if u in {"gbyte", "gbytes", "gb"}:
         return 1024.0 ** 3
-    # Fallback: assume already bytes
-    return 1.0
 
+    return 1.0
 
 def build_join_keys(df: pd.DataFrame):
     """Columns that identify a kernel instance."""
-    candidates = ["Kernel Name", "Context", "Stream",
-                  "Block Size", "Grid Size", "Device", "CC"]
+    candidates = ["Kernel Name", "Context", "Stream", "Block Size", "Grid Size", "Device", "CC"]
+    
     return [c for c in candidates if c in df.columns]
-
 
 def weighted_avg_pct(df: pd.DataFrame, metric_name: str, join_keys):
     """
@@ -73,16 +76,20 @@ def weighted_avg_pct(df: pd.DataFrame, metric_name: str, join_keys):
     """
     # Metric values
     sub = df[df["Metric Name"] == metric_name][join_keys + ["Metric Value"]].copy()
+    
     if sub.empty:
         return math.nan
+    
     sub = sub.rename(columns={"Metric Value": "metric"})
     sub["metric"] = sub["metric"].apply(to_float)
     sub = sub.dropna(subset=["metric"])
 
     # Time values
     tdf = df[df["Metric Name"] == METRIC_TIME][join_keys + ["Metric Value"]].copy()
+    
     if tdf.empty:
         return math.nan
+    
     tdf = tdf.rename(columns={"Metric Value": "time_val"})
     tdf["time_val"] = tdf["time_val"].apply(to_float)
     tdf = tdf.dropna(subset=["time_val"])
@@ -93,19 +100,19 @@ def weighted_avg_pct(df: pd.DataFrame, metric_name: str, join_keys):
     if merged.empty:
         return math.nan
 
-    return float((merged["metric"] * merged["time_val"]).sum() /
-                 merged["time_val"].sum())
-
+    return float((merged["metric"] * merged["time_val"]).sum() / merged["time_val"].sum())
 
 def sum_step_time_seconds(df: pd.DataFrame) -> float:
     """Sum gpu__time_duration.sum over kernels, converted to seconds."""
     tdf = df[df["Metric Name"] == METRIC_TIME].copy()
+    
     if tdf.empty:
         return math.nan
 
     unit_col = "Metric Unit" if "Metric Unit" in tdf.columns else (
         "Unit" if "Unit" in tdf.columns else None
     )
+    
     unit_mode = tdf[unit_col].mode().iat[0] if unit_col else "usecond"
     scale = detect_time_scale(unit_mode)
 
@@ -115,39 +122,44 @@ def sum_step_time_seconds(df: pd.DataFrame) -> float:
 
     step_time_raw = float(tdf["time_val"].sum())
     step_time_s = step_time_raw * scale
+    
     return step_time_s
-
 
 def sum_metric(df: pd.DataFrame, metric_name: str) -> float:
     """Sum Metric Value over all rows for a given metric (no unit scaling)."""
     sub = df[df["Metric Name"] == metric_name].copy()
+    
     if sub.empty:
         return 0.0
+    
     vals = sub["Metric Value"].apply(to_float)
     vals = vals.dropna()
+    
     return float(vals.sum())
-
 
 def sum_bytes_metric(df: pd.DataFrame, metric_name: str) -> float:
     """Sum byte-type metrics, respecting Metric Unit, into raw bytes."""
     sub = df[df["Metric Name"] == metric_name].copy()
+    
     if sub.empty:
         return 0.0
 
     total = 0.0
+    
     for _, row in sub.iterrows():
         val = to_float(row["Metric Value"])
+        
         if np.isnan(val):
             continue
+        
         scale = detect_bytes_scale(row.get("Metric Unit", "byte"))
         total += val * scale
+    
     return float(total)
 
-
 def main():
-    ap = argparse.ArgumentParser(
-        description="Parse Nsight Compute CSV and aggregate FLOPs/bytes/time."
-    )
+    ap = argparse.ArgumentParser(description="Parse Nsight Compute CSV and aggregate FLOPs/bytes/time.")
+
     ap.add_argument("csv", help="Nsight Compute --csv export (per-kernel rows)")
     ap.add_argument("--label", default="workload", help="Label/name for this run")
     ap.add_argument("--out", default="summary.txt", help="Output text summary file")
@@ -156,6 +168,7 @@ def main():
     df = pd.read_csv(args.csv)
 
     join_keys = build_join_keys(df)
+
     if not join_keys:
         raise SystemExit(
             "Could not find kernel identity columns "
@@ -226,7 +239,6 @@ def main():
     print(f"AI (FLOP/B):   {AI_flop_per_byte:.6f}")
     print(f"SM%:           {sm_pct:.3f}")
     print(f"DRAM%:         {dram_pct:.3f}")
-
 
 if __name__ == "__main__":
     main()

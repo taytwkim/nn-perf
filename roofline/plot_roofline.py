@@ -4,39 +4,33 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+"""
+Plot a roofline model based on command line arguments
+"""
 
 def logspace(a, b, n):
     """Log-spaced samples between a and b (inclusive) with n points."""
     return [10 ** (math.log10(a) + i * (math.log10(b / a) / (n - 1))) for i in range(n)]
 
-
 def main():
-    ap = argparse.ArgumentParser(
-        description="Plot a single-point roofline given precomputed AI and GFLOP/s."
-    )
-    ap.add_argument("--ai", type=float, required=True,
-                    help="Arithmetic intensity (FLOP/byte) for the workload point.")
-    ap.add_argument("--gflops", type=float, required=True,
-                    help="Attained performance (GFLOP/s) for the workload point.")
-    ap.add_argument("--peak-compute", type=float, required=True,
-                    help="Peak compute throughput (TFLOP/s).")
-    ap.add_argument("--peak-bw", type=float, required=True,
-                    help="Peak memory bandwidth (GB/s).")
-    ap.add_argument("--label", default="Workload",
-                    help="Label for the plotted point.")
-    ap.add_argument("--sm-pct", type=float, default=None,
-                    help="Time-weighted SM%% of peak sustained (optional, for annotation).")
-    ap.add_argument("--dram-pct", type=float, default=None,
-                    help="Time-weighted DRAM%% of peak sustained (optional, for annotation).")
-    ap.add_argument("--out", default="roofline.png",
-                    help="Output PNG filename.")
+    ap = argparse.ArgumentParser(description="Plot a single-point roofline given precomputed AI and GFLOP/s.")
+
+    ap.add_argument("--ai", type=float, required=True, help="Arithmetic intensity (FLOP/byte) for the workload point.")
+    ap.add_argument("--gflops", type=float, required=True, help="Attained performance (GFLOP/s) for the workload point.")
+    ap.add_argument("--peak-compute", type=float, required=True, help="Peak compute throughput (TFLOP/s).")
+    ap.add_argument("--peak-bw", type=float, required=True, help="Peak memory bandwidth (GB/s).")
+    ap.add_argument("--label", default="Workload", help="Label for the plotted point.")
+    ap.add_argument("--sm-pct", type=float, default=None, help="Time-weighted SM%% of peak sustained (optional, for annotation).")
+    ap.add_argument("--dram-pct", type=float, default=None, help="Time-weighted DRAM%% of peak sustained (optional, for annotation).")
+    ap.add_argument("--out", default="roofline.png", help="Output PNG filename.")
+    
     args = ap.parse_args()
 
     # Inputs
-    AI = args.ai                       # FLOP/byte
-    Y = args.gflops                    # GFLOP/s
-    peak_compute_gflops = args.peak_compute * 1000.0  # TFLOP/s -> GFLOP/s
-    peak_bw_gbps = args.peak_bw        # GB/s
+    AI = args.ai                                        # FLOP/byte
+    Y = args.gflops                                     # GFLOP/s
+    peak_compute_gflops = args.peak_compute * 1000.0    # TFLOP/s -> GFLOP/s
+    peak_bw_gbps = args.peak_bw                         # GB/s
 
     # Knee: where compute roof meets bandwidth roof
     knee_AI = peak_compute_gflops / peak_bw_gbps
@@ -85,8 +79,10 @@ def main():
         f"AI={AI:.3f} FLOP/B",
         f"Y={Y:.1f} GFLOP/s",
     ]
+
     if args.sm_pct is not None:
         annot_lines.append(f"SM%={args.sm_pct:.1f}")
+    
     if args.dram_pct is not None:
         annot_lines.append(f"DRAM%={args.dram_pct:.1f}")
 
@@ -104,17 +100,16 @@ def main():
     ax.set_xlabel("Arithmetic Intensity (FLOP/byte)")
     ax.set_ylabel("Attainable Performance (GFLOP/s)")
 
-    ax.set_title(
-        f"Roofline (Peak: {args.peak_compute:.2f} TFLOP/s, {args.peak_bw:.0f} GB/s)"
-    )
+    ax.set_title(f"Roofline (Peak: {args.peak_compute:.2f} TFLOP/s, {args.peak_bw:.0f} GB/s)")
+
     ax.grid(True, which="both", ls=":", lw=0.5)
     ax.legend(loc="lower right", fontsize=8)
 
     fig.tight_layout()
     fig.savefig(args.out)
+    
     print(f"Saved roofline plot to {args.out}")
     print(f"Point: AI={AI:.3f} FLOP/byte, Y={Y:.1f} GFLOP/s, knee AI={knee_AI:.3f}")
-
 
 if __name__ == "__main__":
     main()
