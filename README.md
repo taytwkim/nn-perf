@@ -77,9 +77,11 @@ python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
 
 1. First, generate a `.ncu-rep` file. The metrics listed below must be included.
 ```bash!
-ncu --nvtx --nvtx-include "train_step/" --target-processes all \
-    --metrics \
-sm__throughput.avg.pct_of_peak_sustained_elapsed,\
+ncu \
+  --nvtx \
+  --nvtx-include "train_step/" \
+  --target-processes all \
+  --metrics sm__throughput.avg.pct_of_peak_sustained_elapsed,\
 dram__throughput.avg.pct_of_peak_sustained_elapsed,\
 gpu__time_duration.sum,\
 smsp__sass_thread_inst_executed_op_fadd_pred_on.sum,\
@@ -87,8 +89,9 @@ smsp__sass_thread_inst_executed_op_fmul_pred_on.sum,\
 smsp__sass_thread_inst_executed_op_ffma_pred_on.sum,\
 dram__bytes_read.sum,\
 dram__bytes_write.sum \
-    --force-overwrite --export report-file-name \
-    python3 train.py --epochs 1 --batch-size 128 --profile-one-step --warmup-iters 20
+  --force-overwrite \
+  --export report-file-name \
+  python3 train.py --epochs 1 --batch-size 128 --profile-one-step --warmup-iters 20
 ```
 
 2. Export `.ncu-rep` as a csv, and parse it to generate a profiler summary.
@@ -97,7 +100,7 @@ ncu --import report.ncu-rep --csv > report.csv
 python3 parse_ncu_csv.py report.csv --label resnet18_bs128_L4 --out summary.txt
 ```
 
-3. Based on the summary, generate a roofline model by passing in arguments.
+3. Based on the summary, generate a roofline model by passing in arguments. `ai` and `gflops` are extracted from `.ncu-rep`, and `peak-compute` and `peak-bw` can are known for each GPU (e.g., 30 TFLOPS and 300 GB/s).
 ```bash!
 python3 plot_roofline.py \
   --ai 15.624057 \
