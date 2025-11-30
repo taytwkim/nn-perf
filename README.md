@@ -100,7 +100,7 @@ ncu --import report.ncu-rep --csv > report.csv
 python3 parse_ncu_csv.py report.csv --label resnet18_bs128_L4 --out summary.txt
 ```
 
-3. Based on the summary, generate a roofline model by passing in arguments. `ai` and `gflops` are extracted from `.ncu-rep`, and `peak-compute` and `peak-bw` can are known for each GPU (e.g., 30 TFLOPS and 300 GB/s).
+3. Based on the summary, generate a roofline model by passing in arguments. `ai` and `gflops` are extracted from `.ncu-rep`, and `peak-compute` and `peak-bw` can are known for each GPU (e.g., 30 TFLOPS and 300 GB/s for L4).
 ```bash!
 python3 plot_roofline.py \
   --ai 15.624057 \
