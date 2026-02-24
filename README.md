@@ -84,13 +84,13 @@ ncu \
   --nvtx-include "train_step/" \
   --target-processes all \
   --metrics sm__throughput.avg.pct_of_peak_sustained_elapsed,\
-dram__throughput.avg.pct_of_peak_sustained_elapsed,\
-gpu__time_duration.sum,\
-smsp__sass_thread_inst_executed_op_fadd_pred_on.sum,\
-smsp__sass_thread_inst_executed_op_fmul_pred_on.sum,\
-smsp__sass_thread_inst_executed_op_ffma_pred_on.sum,\
-dram__bytes_read.sum,\
-dram__bytes_write.sum \
+            dram__throughput.avg.pct_of_peak_sustained_elapsed,\
+            gpu__time_duration.sum,\
+            smsp__sass_thread_inst_executed_op_fadd_pred_on.sum,\
+            smsp__sass_thread_inst_executed_op_fmul_pred_on.sum,\
+            smsp__sass_thread_inst_executed_op_ffma_pred_on.sum,\
+            dram__bytes_read.sum,\
+            dram__bytes_write.sum \
   --force-overwrite \
   --export report-file-name \
   python3 train.py --epochs 1 --batch-size 128 --profile-one-step --warmup-iters 20
