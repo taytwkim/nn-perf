@@ -1,18 +1,18 @@
-# Rooflines on NVIDIA GPUs
+<h1 align="center">Rooflines on NVIDIA GPUs</h1>
 
-* Experiment with performance profilers (NVIDIA Nsight Compute).
-* Train ResNet18 and ResNet34 on CIFAR-10.
-* Extract `.ncu-rep` file as a csv and generate a roofline model using `plot-roofline.py`. If available, NCU UI can be used for roofline modeling instead.
+<div align="center">
+  <img src="roofline/img/a1_resnet18_bs64_L4.png" width="500" />
+</div>
 
-<img src="roofline/img/a1_resnet18_bs64_L4.png" width="500" />
+In this project, we use [roofline analysis](https://en.wikipedia.org/wiki/Roofline_model) to characterize whether deep learning training workloads are limited by memory bandwidth or compute throughput. We analyze the training of ResNet-18 and ResNet-34 on CIFAR-10 by collecting GPU kernel-level metrics with NVIDIA Nsight Compute (`ncu`). The resulting `.ncu-rep` files are exported to CSV and processed to obtain FLOP/s and arithmetic intensity, which are then used to generate roofline plots.
 
-### Jump To:
+## 🪂 Jump To
 - [Model Training](#train)
-- [Training Arguments](#training-arguments)
+- [Training Parameters](#training-parameters)
 - [Roofline Modeling](#roofline)
 - [Directory](#directory)
 
-## <a id="train"></a> 🚂 Train
+## <a id="train"></a> 🚂 Model Training
 
 1. Activate a venv.
 ```bash!
@@ -45,7 +45,7 @@ python3 train.py --model resnet18 --epochs 5 --batch-size 128
 python3 train.py --model resnet18 --epochs 20 --batch-size 256 --amp --workers 4
 ```
 
-## <a id="training-arguments"></a> 🚀 Training Arguments
+## <a id="training-parameters"></a> 🚀 Training Parameters
 ```bash!
 python3 train.py [--epochs <INT>] [--batch-size <INT>] [--lr <FLOAT>] \
                  [--data <PATH>] [--out-dir <DIR>] \
