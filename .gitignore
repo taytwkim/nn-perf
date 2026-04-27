@@ -8,8 +8,8 @@
 venv/
 
 # Datasets & artifacts
-data/
 artifacts/*
+data/*
 !artifacts/.gitkeep
 !data/.gitkeep
 
